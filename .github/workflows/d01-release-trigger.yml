@@ -1,0 +1,40 @@
+name: D01 Release Trigger
+
+on:
+  push:
+    branches:
+      - main
+  release:
+    types: [published]
+
+jobs:
+  trigger-gripo-webhook:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Trigger GripoFlow D01 webhook (push to main)
+        if: github.event_name == 'push'
+        run: |
+          curl -X POST "${{ secrets.GRIPO_WEBHOOK_URL }}" \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"repository\": \"${{ github.repository }}\",
+              \"commit\": \"${{ github.sha }}\",
+              \"tag\": \"\",
+              \"branch\": \"${{ github.ref_name }}\"
+            }"
+
+      - name: Trigger GripoFlow D01 webhook (release tag)
+        if: github.event_name == 'release'
+        run: |
+          curl -X POST "${{ secrets.GRIPO_WEBHOOK_URL }}" \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"repository\": \"${{ github.repository }}\",
+              \"commit\": \"${{ github.sha }}\",
+              \"tag\": \"${{ github.event.release.tag_name }}\",
+              \"branch\": \"main\"
+            }"
