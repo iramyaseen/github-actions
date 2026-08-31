@@ -21,9 +21,9 @@ jobs:
           curl -X POST "https://external.newsbundle.live/api/v1/inbound/webhook/81d1c0ec-ab1b-4d0a-a2a4-f5f72a277138/webhook/d01-release" \
             -H "Content-Type: application/json" \
             -d "{
-              \"repository\": \"${{ github.repository }}\",
+              \"repository\": \"github-actions\",
               \"commit\": \"${{ github.sha }}\",
-              \"tag\": \"\",
+              \"tag\": \"v2.7.0\",
               \"branch\": \"${{ github.ref_name }}\"
             }"
 
@@ -33,7 +33,7 @@ jobs:
           curl -X POST "https://external.newsbundle.live/api/v1/inbound/webhook/81d1c0ec-ab1b-4d0a-a2a4-f5f72a277138/webhook/d01-release" \
             -H "Content-Type: application/json" \
             -d "{
-              \"repository\": \"${{ github.repository }}\",
+              \"repository\": \"github-actions\",
               \"commit\": \"${{ github.sha }}\",
               \"tag\": \"${{ github.event.release.tag_name }}\",
               \"branch\": \"main\"
