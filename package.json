@@ -1,0 +1,8 @@
+{
+  "name": "payment-service",
+  "version": "2.6.0",
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "node --test tests/health.test.js"
+  }
+}
