@@ -2,6 +2,7 @@ name: D01 Release Trigger
 
 env:
   REPOSITORY: iramyaseen/github-actions
+  ENVIRONMENT: prod
 
 on:
   release:
@@ -10,6 +11,26 @@ on:
     types: [closed]
     branches: [main]
   workflow_dispatch:
+    inputs:
+      environment:
+        description: Target environment
+        required: true
+        default: prod
+        type: choice
+        options:
+          - prod
+          - stag
+          - dev
+      is_approved:
+        description: Release approved
+        required: true
+        default: false
+        type: boolean
+      approver_name:
+        description: Approver name
+        required: true
+        default: mussa
+        type: string
 
 jobs:
   trigger-d01:
@@ -21,24 +42,36 @@ jobs:
           GRIPO_WEBHOOK_URL: ${{ secrets.GRIPO_D01_WEBHOOK_URL }}
         run: |
           if [ "${{ github.event_name }}" = "release" ]; then
-            IMAGE_TAG="${{ github.event.release.tag_name }}"
-            REF="refs/tags/${{ github.event.release.tag_name }}"
-            RELEASE_ID="${{ github.event.release.tag_name }}"
+            BRANCH="main"
+            TAG="${{ github.event.release.tag_name }}"
+            COMMIT="${{ github.sha }}"
+            ENV_NAME="${{ env.ENVIRONMENT }}"
+            IS_APPROVED=false
+            APPROVER="mussa"
+          elif [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            BRANCH="main"
+            TAG="${{ github.ref_name }}"
+            COMMIT="${{ github.sha }}"
+            ENV_NAME="${{ inputs.environment }}"
+            IS_APPROVED=${{ inputs.is_approved }}
+            APPROVER="${{ inputs.approver_name }}"
           else
-            IMAGE_TAG="${{ github.sha }}"
-            REF="${{ github.ref }}"
-            RELEASE_ID="${{ github.run_id }}"
+            BRANCH="${{ github.event.pull_request.base.ref }}"
+            TAG="${{ github.sha }}"
+            COMMIT="${{ github.sha }}"
+            ENV_NAME="${{ env.ENVIRONMENT }}"
+            IS_APPROVED=false
+            APPROVER="${{ github.actor }}"
           fi
 
           curl --fail-with-body -X POST "$GRIPO_WEBHOOK_URL" \
             -H "Content-Type: application/json" \
             -d "{
-              \"imageTag\": \"${IMAGE_TAG}\",
-              \"pr\": ${{ github.event.pull_request.number || 0 }},
-              \"ref\": \"${REF}\",
-              \"releaseId\": \"${RELEASE_ID}\",
+              \"branch\": \"${BRANCH}\",
+              \"commit\": \"${COMMIT}\",
               \"repository\": \"${{ env.REPOSITORY }}\",
-              \"sha\": \"${{ github.sha }}\",
-              \"triggeredBy\": \"${{ github.actor }}\",
-              \"version\": \"1.0.0\"
+              \"tag\": \"${TAG}\",
+              \"isApproved\": ${IS_APPROVED},
+              \"approverName\": \"${APPROVER}\",
+              \"env\": \"${ENV_NAME}\"
             }"
