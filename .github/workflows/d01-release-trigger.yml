@@ -64,6 +64,21 @@ jobs:
             APPROVER="${{ github.actor }}"
           fi
 
+          DAY_OF_WEEK=$(date -u +%u)
+          HOUR_UTC=$(date -u +%H)
+          if [ "$DAY_OF_WEEK" -ge 1 ] && [ "$DAY_OF_WEEK" -le 5 ] && [ "$HOUR_UTC" -ge 9 ] && [ "$HOUR_UTC" -lt 17 ]; then
+            IN_TIME_WINDOW=true
+          else
+            IN_TIME_WINDOW=false
+          fi
+
+          AUTH_STATUS="NotAllowed"
+          if [ "$BRANCH" = "main" ] && [ "$IS_APPROVED" = "true" ] && [ "$APPROVER" = "mussa" ] && [ "$IN_TIME_WINDOW" = "true" ]; then
+            case "$ENV_NAME" in
+              prod|stag|dev) AUTH_STATUS="Allowed" ;;
+            esac
+          fi
+
           curl --fail-with-body -X POST "$GRIPO_WEBHOOK_URL" \
             -H "Content-Type: application/json" \
             -d "{
@@ -73,5 +88,7 @@ jobs:
               \"tag\": \"${TAG}\",
               \"isApproved\": ${IS_APPROVED},
               \"approverName\": \"${APPROVER}\",
-              \"env\": \"${ENV_NAME}\"
+              \"env\": \"${ENV_NAME}\",
+              \"inTimeWindow\": ${IN_TIME_WINDOW},
+              \"authorizationStatus\": \"${AUTH_STATUS}\"
             }"
