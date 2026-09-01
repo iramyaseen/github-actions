@@ -4,6 +4,8 @@ env:
   REPOSITORY: iramyaseen/github-actions
 
 on:
+  release:
+    types: [published]
   pull_request:
     types: [closed]
     branches: [main]
@@ -11,22 +13,32 @@ on:
 
 jobs:
   trigger-d01:
-    if: github.event.pull_request.merged == true || github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'release' || github.event.pull_request.merged == true || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
       - name: Trigger Gripo D01 Workflow
         env:
           GRIPO_WEBHOOK_URL: ${{ secrets.GRIPO_D01_WEBHOOK_URL }}
         run: |
+          if [ "${{ github.event_name }}" = "release" ]; then
+            IMAGE_TAG="${{ github.event.release.tag_name }}"
+            REF="refs/tags/${{ github.event.release.tag_name }}"
+            RELEASE_ID="${{ github.event.release.tag_name }}"
+          else
+            IMAGE_TAG="${{ github.sha }}"
+            REF="${{ github.ref }}"
+            RELEASE_ID="${{ github.run_id }}"
+          fi
+
           curl --fail-with-body -X POST "$GRIPO_WEBHOOK_URL" \
             -H "Content-Type: application/json" \
             -d "{
-              \"version\": \"1.0.0\",
-              \"repository\": \"${{ env.REPOSITORY }}\",
-              \"ref\": \"${{ github.ref }}\",
-              \"sha\": \"${{ github.sha }}\",
+              \"imageTag\": \"${IMAGE_TAG}\",
               \"pr\": ${{ github.event.pull_request.number || 0 }},
-              \"imageTag\": \"${{ github.sha }}\",
-              \"releaseId\": \"${{ github.run_id }}\",
-              \"triggeredBy\": \"${{ github.actor }}\"
+              \"ref\": \"${REF}\",
+              \"releaseId\": \"${RELEASE_ID}\",
+              \"repository\": \"${{ env.REPOSITORY }}\",
+              \"sha\": \"${{ github.sha }}\",
+              \"triggeredBy\": \"${{ github.actor }}\",
+              \"version\": \"1.0.0\"
             }"
