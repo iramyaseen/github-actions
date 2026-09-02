@@ -66,7 +66,8 @@ jobs:
 
           DAY_OF_WEEK=$(date -u +%u)
           HOUR_UTC=$(date -u +%H)
-          if [ "$DAY_OF_WEEK" -ge 1 ] && [ "$DAY_OF_WEEK" -le 5 ] && [ "$HOUR_UTC" -ge 9 ] && [ "$HOUR_UTC" -lt 17 ]; then
+          # Mon-Fri 06:00-17:00 UTC (11:00-22:00 PKT) — updated 2026-09-02
+          if [ "$DAY_OF_WEEK" -ge 1 ] && [ "$DAY_OF_WEEK" -le 5 ] && [ "$HOUR_UTC" -ge 6 ] && [ "$HOUR_UTC" -lt 17 ]; then
             IN_TIME_WINDOW=true
           else
             IN_TIME_WINDOW=false
